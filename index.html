@@ -160,10 +160,11 @@
     text-align:left;
     text-align-last:left;
     -moz-text-align-last:left;
-    width:auto;
+    width:100%;
     max-width:100%;
     appearance:none;
     -webkit-appearance:none;
+    cursor:pointer;
   }
   .pill-select::after{
     content:"";
@@ -201,8 +202,9 @@
     font-weight:700;
     color:var(--ink);
     text-align:left;
-    width:3.2em;
-    flex:0 0 auto;
+    width:100%;
+    flex:1;
+    min-width:0;
   }
   .pill input::-webkit-outer-spin-button,
   .pill input::-webkit-inner-spin-button{
@@ -361,10 +363,6 @@
       <label>Client Name</label>
       <input type="text" id="clientName" placeholder="">
     </div>
-    <div class="field">
-      <label>Date</label>
-      <input type="text" id="clientDate" placeholder="">
-    </div>
   </div>
 
   <div class="section-header">ENTER YOUR DETAILS</div>
@@ -394,19 +392,19 @@
     <div class="input-row">
       <label>Age</label>
       <div class="control-wrap">
-        <div class="pill"><input type="number" id="age" value="30" min="0"></div>
+        <div class="pill"><input type="number" id="age" value="30" min="10" max="100"></div>
       </div>
     </div>
     <div class="input-row">
       <label>Body weight</label>
       <div class="control-wrap">
-        <div class="pill"><input type="number" id="weight" value="80" min="0" step="0.1"><span class="unit-inline" id="weightUnit">kg</span></div>
+        <div class="pill"><input type="number" id="weight" value="80" min="20" max="300" step="0.1"><span class="unit-inline" id="weightUnit">kg</span></div>
       </div>
     </div>
     <div class="input-row">
       <label>Height</label>
       <div class="control-wrap">
-        <div class="pill"><input type="number" id="height" value="178" min="0"><span class="unit-inline" id="heightUnit">cm</span></div>
+        <div class="pill"><input type="number" id="height" value="178" min="100" max="250"><span class="unit-inline" id="heightUnit">cm</span></div>
       </div>
     </div>
     <div class="input-row">
@@ -440,7 +438,7 @@
     </div>
   </div>
 
-  <div class="warning" id="warningBanner">&#9888; Please fill in age, weight &amp; height above to see your targets</div>
+  <div class="warning" id="warningBanner">&#9888; Please check your age, weight &amp; height above to see your targets</div>
 
   <div class="section-header">YOUR DAILY TARGETS</div>
   <div class="results">
@@ -498,7 +496,17 @@ function recalc(){
   document.getElementById('weightUnit').textContent = units === 'Metric' ? 'kg' : 'lb';
   document.getElementById('heightUnit').textContent = units === 'Metric' ? 'cm' : 'in';
 
-  const valid = age > 0 && weightRaw > 0 && heightRaw > 0;
+  const bounds = units === 'Metric'
+    ? {weightMin:20, weightMax:300, heightMin:100, heightMax:250}
+    : {weightMin:44, weightMax:660, heightMin:39, heightMax:98};
+  const weightEl = document.getElementById('weight');
+  const heightEl = document.getElementById('height');
+  weightEl.min = bounds.weightMin; weightEl.max = bounds.weightMax;
+  heightEl.min = bounds.heightMin; heightEl.max = bounds.heightMax;
+
+  const valid = age >= 10 && age <= 100
+    && weightRaw >= bounds.weightMin && weightRaw <= bounds.weightMax
+    && heightRaw >= bounds.heightMin && heightRaw <= bounds.heightMax;
   document.getElementById('warningBanner').classList.toggle('show', !valid);
 
   const outIds = ['outCalories','outProtein','outFat','outCarbs','outFibre','outWater'];
@@ -570,6 +578,15 @@ function recalc(){
 
 document.querySelectorAll('input, select').forEach(el => el.addEventListener('input', recalc));
 recalc();
+
+document.querySelectorAll('.pill, .pill-select').forEach(box => {
+  box.addEventListener('click', (e) => {
+    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'SELECT') {
+      const control = box.querySelector('input, select');
+      if (control) control.focus();
+    }
+  });
+});
 </script>
 </body>
 </html>
