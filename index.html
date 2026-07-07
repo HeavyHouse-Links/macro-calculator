@@ -346,9 +346,114 @@
     padding:11px 22px;
     border-radius:var(--radius-sm);
   }
+  .gate{
+    position:fixed;
+    inset:0;
+    background:rgba(244,244,244,0.55);
+    -webkit-backdrop-filter:blur(7px);
+    backdrop-filter:blur(7px);
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:56px 16px 32px;
+    z-index:50;
+  }
+  .gate.hidden{display:none;}
+  .gate-card{
+    width:100%;
+    max-width:400px;
+    background:#ffffff;
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow);
+    overflow:hidden;
+  }
+  .gate-header{
+    background:var(--ink);
+    color:#fff;
+    padding:20px 24px;
+    text-align:center;
+  }
+  .gate-header h2{
+    margin:0;
+    font-size:16px;
+    letter-spacing:0.06em;
+    font-weight:800;
+  }
+  .gate-body{padding:18px 24px 22px;}
+  .gate-body p.gate-lead{
+    margin:0 0 14px;
+    font-size:12.5px;
+    color:#555;
+    text-align:center;
+    line-height:1.5;
+  }
+  .gate-body label{
+    display:block;
+    font-size:11px;
+    color:var(--ink);
+    margin:10px 0 4px;
+    font-weight:600;
+  }
+  .gate-body input{
+    width:100%;
+    background:var(--input-bg);
+    border:1px solid #e2e2e2;
+    border-radius:var(--radius-sm);
+    padding:11px 12px;
+    font-size:14px;
+    font-weight:700;
+    color:var(--ink);
+    font-family:inherit;
+  }
+  .gate-btn{
+    width:100%;
+    margin-top:16px;
+    background:var(--ink);
+    color:#fff;
+    border:none;
+    border-radius:var(--radius-sm);
+    padding:13px 0;
+    font-size:12.5px;
+    font-weight:800;
+    letter-spacing:0.04em;
+    font-family:inherit;
+    cursor:pointer;
+  }
+  .gate-btn:disabled{opacity:0.6;}
+  .gate-err{
+    margin:10px 0 0;
+    font-size:11.5px;
+    color:var(--warn);
+    text-align:center;
+    display:none;
+  }
+  .gate-err.show{display:block;}
+  .gate-fine{
+    margin:12px 0 0;
+    font-size:10px;
+    color:var(--disclaimer);
+    font-style:italic;
+    text-align:center;
+    line-height:1.5;
+  }
 </style>
 </head>
 <body>
+<div class="gate" id="gate">
+  <div class="gate-card">
+    <div class="gate-header"><h2>BEFORE YOU START</h2></div>
+    <div class="gate-body">
+      <p class="gate-lead">The calculator is free to use &mdash; just tell me who you are and it'll open right up.</p>
+      <label for="gateName">Name</label>
+      <input type="text" id="gateName" autocomplete="name" placeholder="Your name">
+      <label for="gateEmail">Email</label>
+      <input type="email" id="gateEmail" autocomplete="email" placeholder="you@email.com">
+      <button type="button" class="gate-btn" id="gateBtn">OPEN THE CALCULATOR</button>
+      <p class="gate-err" id="gateErr">Please enter your name and a valid email address.</p>
+      <p class="gate-fine">You'll get the occasional free training and nutrition tip from Heavy House. No spam, unsubscribe anytime.</p>
+    </div>
+  </div>
+</div>
 <div class="card">
 
   <div class="header">
@@ -587,6 +692,56 @@ document.querySelectorAll('.pill, .pill-select').forEach(box => {
     }
   });
 });
+
+(function(){
+  const gate = document.getElementById('gate');
+  const nameEl = document.getElementById('gateName');
+  const emailEl = document.getElementById('gateEmail');
+  const btn = document.getElementById('gateBtn');
+  const err = document.getElementById('gateErr');
+  let unlocked = false;
+
+  let hasAccess = false;
+  try { hasAccess = localStorage.getItem('hhCalcAccess') === '1'; } catch(e) {}
+  if (hasAccess) { gate.classList.add('hidden'); return; }
+
+  document.body.style.overflow = 'hidden';
+
+  function unlock(){
+    if (unlocked) return;
+    unlocked = true;
+    gate.classList.add('hidden');
+    document.body.style.overflow = '';
+    try { localStorage.setItem('hhCalcAccess', '1'); } catch(e) {}
+  }
+
+  function submitGate(){
+    const name = nameEl.value.trim();
+    const email = emailEl.value.trim();
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+    if (!name || !emailOk) { err.classList.add('show'); return; }
+    err.classList.remove('show');
+    btn.disabled = true;
+    btn.textContent = 'OPENING...';
+
+    const parts = name.split(/\s+/);
+    const fd = new FormData();
+    fd.append('q3_name[first]', parts[0]);
+    fd.append('q3_name[last]', parts.slice(1).join(' '));
+    fd.append('q4_email', email);
+    fetch('https://submit.jotform.com/submit/261870538436060', {
+      method: 'POST',
+      mode: 'no-cors',
+      body: fd
+    }).then(unlock, unlock);
+    setTimeout(unlock, 2500);
+  }
+
+  btn.addEventListener('click', submitGate);
+  [nameEl, emailEl].forEach(el => el.addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitGate();
+  }));
+})();
 </script>
 </body>
 </html>
