@@ -373,6 +373,12 @@
     padding:20px 24px;
     text-align:center;
   }
+  .gate-header img{
+    width:44px;
+    height:44px;
+    border-radius:8px;
+    margin-bottom:10px;
+  }
   .gate-header h2{
     margin:0;
     font-size:16px;
@@ -441,7 +447,7 @@
 <body>
 <div class="gate" id="gate">
   <div class="gate-card">
-    <div class="gate-header"><h2>BEFORE YOU START</h2></div>
+    <div class="gate-header"><img id="gateLogo" alt="Heavy House"><h2>BEFORE YOU START</h2></div>
     <div class="gate-body">
       <p class="gate-lead">The calculator is free to use &mdash; just tell me who you are and it'll open right up.</p>
       <label for="gateName">Name</label>
@@ -700,6 +706,9 @@ document.querySelectorAll('.pill, .pill-select').forEach(box => {
   const btn = document.getElementById('gateBtn');
   const err = document.getElementById('gateErr');
   let unlocked = false;
+
+  const headerLogo = document.querySelector('.header img');
+  if (headerLogo) document.getElementById('gateLogo').src = headerLogo.src;
 
   let hasAccess = false;
   try { hasAccess = localStorage.getItem('hhCalcAccess') === '1'; } catch(e) {}
